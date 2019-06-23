@@ -11,7 +11,6 @@ import PDFJS from 'pdfjs-dist';
 // Import our styles
 import 'bootstrap-colorpicker/dist/css/bootstrap-colorpicker.css';
 import 'sass/styles.scss';
-import 'katex/dist/katex.min.css';
 
 import {isDevMode, setCSRFFromCookie} from 'utils/utils';
 import store from 'stores/redux_store.jsx';
