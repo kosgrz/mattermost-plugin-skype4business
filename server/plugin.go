@@ -6,6 +6,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/pkg/errors"
 	"io"
 	"net/http"
 	"net/url"
@@ -58,6 +59,9 @@ func (p *Plugin) OnActivate() error {
 	config := p.getConfiguration()
 	if err := config.IsValid(); err != nil {
 		return err
+	}
+	if err := p.API.RegisterCommand(getCommand()); err != nil {
+		return errors.Wrap(err, fmt.Sprintf("Unable to register command: %v", getCommand()))
 	}
 
 	return nil
