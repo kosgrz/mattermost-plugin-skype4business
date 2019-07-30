@@ -18,11 +18,11 @@ func getCommand() *model.Command {
 	}
 }
 
-func (p *Plugin) getCommandResponse(responseType, text string) *model.CommandResponse {
+func (p *Plugin) getCommandResponse(responseType, username string, text string) *model.CommandResponse {
 	return &model.CommandResponse{
 		ResponseType: responseType,
 		Text:         text,
-		Username:     "test",
+		Username:     username,
 		Type:         POST_MEETING_TYPE,
 	}
 }
@@ -30,11 +30,19 @@ func (p *Plugin) getCommandResponse(responseType, text string) *model.CommandRes
 func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
 
 	serverConfiguration := p.API.GetConfig()
+	user, err := p.API.GetUser(args.UserId)
+	if err != nil {
+		fmt.Println(err.Error())
+		return nil, &model.AppError{Message: err.Error()}
+	} else if user == nil {
+		fmt.Println("User is nil")
+		return nil, &model.AppError{Message: "User is nil"}
+	}
 
 	post := &model.Post{
 		UserId:    args.UserId,
 		ChannelId: args.ChannelId,
-		Message:   "Meeting started at %s.",
+		Message:   "Meeting scheduled.",
 		Type:      POST_MEETING_TYPE,
 		Props: map[string]interface{}{
 			"meeting_id":        "test",
@@ -42,7 +50,7 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 			"meeting_personal":  "test",
 			"meeting_topic":     "test",
 			"override_username": POST_MEETING_OVERRIDE_USERNAME,
-			"meeting_status":    "STARTED",
+			"meeting_status":    "SCHEDULED",
 			"from_webhook":      "true",
 			"override_icon_url": path.Join(*serverConfiguration.ServiceSettings.SiteURL, "plugins", manifest.ID, "api", "v1", "assets", "profile.png"),
 		},
@@ -50,7 +58,8 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 
 	if _, err := p.API.CreatePost(post); err != nil {
 		fmt.Println(err.Error())
+		return nil, &model.AppError{Message: err.Error()}
 	}
 
-	return p.getCommandResponse(model.COMMAND_RESPONSE_TYPE_IN_CHANNEL, "test"), nil
+	return p.getCommandResponse(model.COMMAND_RESPONSE_TYPE_IN_CHANNEL, user.Username, "testtext"), nil
 }
