@@ -47,3 +47,14 @@ func TestCommand(t *testing.T) {
 	assert.Equal(t, r.Type, POST_MEETING_TYPE)
 	assert.Nil(t, err)
 }
+
+func TestParsingArgs(t *testing.T) {
+	testArgs := "/s4b  8:30am"
+	p := Plugin{}
+
+	parsedArgs, e := p.parseArgs(testArgs)
+
+	assert.NotNil(t, parsedArgs)
+	assert.Equal(t, "0000-01-01 08:30:00 +0000 UTC", parsedArgs.StartTime.String())
+	assert.Nil(t, e)
+}

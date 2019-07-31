@@ -5,6 +5,8 @@ import (
 	"github.com/mattermost/mattermost-server/model"
 	"github.com/mattermost/mattermost-server/plugin"
 	"path"
+	"strings"
+	"time"
 )
 
 func getCommand() *model.Command {
@@ -62,4 +64,23 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 	}
 
 	return p.getCommandResponse(model.COMMAND_RESPONSE_TYPE_IN_CHANNEL, user.Username, "testtext"), nil
+}
+
+type ParsedArgs struct {
+	StartTime time.Time
+}
+
+func (p *Plugin) parseArgs(args string) (*ParsedArgs, error) {
+	parsedArgs := ParsedArgs{}
+	arrayArgs := strings.Split(args, " ")
+
+	if len(arrayArgs) == 3 {
+		startTime, e := time.Parse(time.Kitchen, strings.ToUpper(arrayArgs[2]))
+		if e != nil {
+			return nil, e
+		}
+		parsedArgs.StartTime = startTime
+	}
+
+	return &parsedArgs, nil
 }
