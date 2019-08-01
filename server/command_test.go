@@ -22,7 +22,7 @@ func TestCommand(t *testing.T) {
 	api.On("CreatePost", &model.Post{
 		UserId:    "testuserid",
 		ChannelId: "testchannelid",
-		Message:   "Meeting scheduled.",
+		Message:   "Meeting scheduled at 9:15PM.",
 		Type:      "custom_s4b",
 		Props: model.StringInterface{
 			"from_webhook":      "true",
@@ -38,7 +38,11 @@ func TestCommand(t *testing.T) {
 	p := Plugin{}
 	p.SetAPI(api)
 
-	r, err := p.ExecuteCommand(&plugin.Context{}, &model.CommandArgs{UserId: "testuserid", ChannelId: "testchannelid"})
+	r, err := p.ExecuteCommand(&plugin.Context{}, &model.CommandArgs{
+		UserId:    "testuserid",
+		ChannelId: "testchannelid",
+		Command:   "/s4b 9:15pm",
+	})
 
 	assert.NotNil(t, r)
 	assert.Equal(t, r.ResponseType, model.COMMAND_RESPONSE_TYPE_IN_CHANNEL)
@@ -49,7 +53,7 @@ func TestCommand(t *testing.T) {
 }
 
 func TestParsingArgs(t *testing.T) {
-	testArgs := "/s4b  8:30am"
+	testArgs := "/s4b 8:30am"
 	p := Plugin{}
 
 	parsedArgs, e := p.parseArgs(testArgs)

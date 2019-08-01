@@ -41,10 +41,15 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 		return nil, &model.AppError{Message: "User is nil"}
 	}
 
+	parsedArgs, e := p.parseArgs(args.Command)
+	if e != nil {
+		return nil, &model.AppError{Message: "Invalid arguments"}
+	}
+
 	post := &model.Post{
 		UserId:    args.UserId,
 		ChannelId: args.ChannelId,
-		Message:   "Meeting scheduled.",
+		Message:   "Meeting scheduled at " + parsedArgs.StartTime.Format(time.Kitchen) + ".",
 		Type:      POST_MEETING_TYPE,
 		Props: map[string]interface{}{
 			"meeting_id":        "test",
@@ -74,8 +79,8 @@ func (p *Plugin) parseArgs(args string) (*ParsedArgs, error) {
 	parsedArgs := ParsedArgs{}
 	arrayArgs := strings.Split(args, " ")
 
-	if len(arrayArgs) == 3 {
-		startTime, e := time.Parse(time.Kitchen, strings.ToUpper(arrayArgs[2]))
+	if len(arrayArgs) == 2 {
+		startTime, e := time.Parse(time.Kitchen, strings.ToUpper(arrayArgs[1]))
 		if e != nil {
 			return nil, e
 		}
