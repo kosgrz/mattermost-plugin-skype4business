@@ -3,42 +3,48 @@ package main
 import (
 	"github.com/mattermost/mattermost-server/model"
 	"github.com/mattermost/mattermost-server/plugin"
-	"github.com/mattermost/mattermost-server/plugin/plugintest"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"testing"
 )
 
 func TestCommand(t *testing.T) {
 
-	api := &plugintest.API{}
 	siteURL := "test.com"
-	api.On("GetConfig").Return(&model.Config{
+
+	p := PluginMock{}
+	p.On("GetConfig").Return(&model.Config{
 		ServiceSettings: model.ServiceSettings{
 			SiteURL: &siteURL,
 		},
 	}, (*model.AppError)(nil))
-	api.On("GetUser", "testuserid").
-		Return(&model.User{Username: "testusername"}, (*model.AppError)(nil))
-	api.On("CreatePost", &model.Post{
+	p.On("GetUser", "testuserid").
+		Return(&model.User{Username: "testusername"}, nil)
+	p.On("CreateNewMeeting", &model.User{
+		Username: "testusername",
+	}).Return(&NewMeetingResponse{
+		JoinUrl:   "testurl",
+		MeetingId: "testid",
+	}, nil)
+	p.On("CreatePost", &model.Post{
 		UserId:    "testuserid",
 		ChannelId: "testchannelid",
 		Message:   "Meeting scheduled at 9:15PM.",
 		Type:      "custom_s4b",
 		Props: model.StringInterface{
 			"from_webhook":      "true",
-			"meeting_id":        "test",
-			"meeting_link":      "test",
-			"meeting_personal":  "test",
+			"meeting_id":        "testid",
+			"meeting_link":      "testurl",
+			"meeting_personal":  false,
 			"meeting_status":    "SCHEDULED",
-			"meeting_topic":     "test",
+			"meeting_topic":     "Meeting created by testusername",
+			"start_time":        "0000-01-01 21:15:00 +0000 UTC",
 			"override_icon_url": "test.com/plugins/skype4business/api/v1/assets/profile.png",
 			"override_username": "Skype for Business Plugin",
 		},
 	}).Return(&model.Post{}, (*model.AppError)(nil))
-	p := Plugin{}
-	p.SetAPI(api)
 
-	r, err := p.ExecuteCommand(&plugin.Context{}, &model.CommandArgs{
+	r, err := executeCommand(&p, &plugin.Context{}, &model.CommandArgs{
 		UserId:    "testuserid",
 		ChannelId: "testchannelid",
 		Command:   "/s4b 9:15pm",
@@ -54,11 +60,49 @@ func TestCommand(t *testing.T) {
 
 func TestParsingArgs(t *testing.T) {
 	testArgs := "/s4b 8:30am"
-	p := Plugin{}
 
-	parsedArgs, e := p.parseArgs(testArgs)
+	parsedArgs, e := parseArgs(testArgs)
 
 	assert.NotNil(t, parsedArgs)
 	assert.Equal(t, "0000-01-01 08:30:00 +0000 UTC", parsedArgs.StartTime.String())
 	assert.Nil(t, e)
+}
+
+type PluginMock struct {
+	mock.Mock
+}
+
+func (p *PluginMock) GetConfig() *model.Config {
+	ret := p.Called()
+	return ret.Get(0).(*model.Config)
+}
+
+func (p *PluginMock) GetUser(userId string) (*model.User, *model.AppError) {
+	ret := p.Called(userId)
+
+	if ret.Get(0) != nil && ret.Get(1) == nil {
+		return ret.Get(0).(*model.User), nil
+	} else {
+		return nil, ret.Get(1).(*model.AppError)
+	}
+}
+
+func (p *PluginMock) CreateNewMeeting(user *model.User) (*NewMeetingResponse, error) {
+	ret := p.Called(user)
+
+	if ret.Get(0) != nil && ret.Get(1) == nil {
+		return ret.Get(0).(*NewMeetingResponse), nil
+	} else {
+		return nil, ret.Get(1).(*model.AppError)
+	}
+}
+
+func (p *PluginMock) CreatePost(post *model.Post) (*model.Post, *model.AppError) {
+	ret := p.Called(post)
+
+	if ret.Get(0) != nil && ret.Get(1) == nil {
+		return ret.Get(0).(*model.Post), nil
+	} else {
+		return nil, ret.Get(1).(*model.AppError)
+	}
 }
