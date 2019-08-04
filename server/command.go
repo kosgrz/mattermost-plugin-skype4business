@@ -6,6 +6,7 @@ import (
 	"github.com/mattermost/mattermost-server/model"
 	"github.com/mattermost/mattermost-server/plugin"
 	"path"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -101,17 +102,18 @@ func executeCommand(p IPlugin, c *plugin.Context, args *model.CommandArgs) (*mod
 	post := &model.Post{
 		UserId:    args.UserId,
 		ChannelId: args.ChannelId,
-		Message:   "Meeting scheduled at " + parsedArgs.StartTime.Format(time.Kitchen) + ".",
+		Message:   parsedArgs.MeetingName,
 		Type:      POST_MEETING_TYPE,
 		Props: map[string]interface{}{
 			"meeting_id":        newMeetingResponse.MeetingId,
 			"meeting_link":      newMeetingResponse.JoinUrl,
 			"meeting_personal":  false,
-			"meeting_topic":     "Meeting created by " + user.Username,
+			"meeting_topic":     parsedArgs.MeetingName,
 			"override_username": POST_MEETING_OVERRIDE_USERNAME,
 			"meeting_status":    "SCHEDULED",
 			"from_webhook":      "true",
 			"start_time":        parsedArgs.StartTime.String(),
+			"end_time":          parsedArgs.EndTime.String(),
 			"override_icon_url": path.Join(*serverConfiguration.ServiceSettings.SiteURL, "plugins", manifest.ID, "api", "v1", "assets", "profile.png"),
 		},
 	}
@@ -125,20 +127,27 @@ func executeCommand(p IPlugin, c *plugin.Context, args *model.CommandArgs) (*mod
 }
 
 type ParsedArgs struct {
-	StartTime time.Time
+	MeetingName string
+	StartTime   time.Time
+	EndTime     time.Time
 }
 
 func parseArgs(args string) (*ParsedArgs, error) {
-	parsedArgs := ParsedArgs{}
-	arrayArgs := strings.Split(args, " ")
+	re := regexp.MustCompile(`"([^"]*)"`)
+	match := re.FindAllString(args, -1)
 
-	if len(arrayArgs) == 2 {
-		startTime, e := time.Parse(time.Kitchen, strings.ToUpper(arrayArgs[1]))
-		if e != nil {
-			return nil, e
-		}
-		parsedArgs.StartTime = startTime
+	parsedArgs := ParsedArgs{}
+	parsedArgs.MeetingName = strings.Trim(match[0], "\"")
+	startTime, e := time.Parse(time.Kitchen, strings.ToUpper(strings.Trim(match[1], "\"")))
+	if e != nil {
+		return nil, e
 	}
+	parsedArgs.StartTime = startTime
+	endTime, e := time.Parse(time.Kitchen, strings.ToUpper(strings.Trim(match[2], "\"")))
+	if e != nil {
+		return nil, e
+	}
+	parsedArgs.EndTime = endTime
 
 	return &parsedArgs, nil
 }

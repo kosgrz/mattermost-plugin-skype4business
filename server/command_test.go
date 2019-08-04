@@ -29,7 +29,7 @@ func TestCommand(t *testing.T) {
 	p.On("CreatePost", &model.Post{
 		UserId:    "testuserid",
 		ChannelId: "testchannelid",
-		Message:   "Meeting scheduled at 9:15PM.",
+		Message:   "test custom meeting name",
 		Type:      "custom_s4b",
 		Props: model.StringInterface{
 			"from_webhook":      "true",
@@ -37,8 +37,9 @@ func TestCommand(t *testing.T) {
 			"meeting_link":      "testurl",
 			"meeting_personal":  false,
 			"meeting_status":    "SCHEDULED",
-			"meeting_topic":     "Meeting created by testusername",
+			"meeting_topic":     "test custom meeting name",
 			"start_time":        "0000-01-01 21:15:00 +0000 UTC",
+			"end_time":          "0000-01-01 21:30:00 +0000 UTC",
 			"override_icon_url": "test.com/plugins/skype4business/api/v1/assets/profile.png",
 			"override_username": "Skype for Business Plugin",
 		},
@@ -47,7 +48,7 @@ func TestCommand(t *testing.T) {
 	r, err := executeCommand(&p, &plugin.Context{}, &model.CommandArgs{
 		UserId:    "testuserid",
 		ChannelId: "testchannelid",
-		Command:   "/s4b 9:15pm",
+		Command:   "/s4b \"test custom meeting name\" \"9:15pm\" \"9:30pm\"",
 	})
 
 	assert.NotNil(t, r)
@@ -59,12 +60,14 @@ func TestCommand(t *testing.T) {
 }
 
 func TestParsingArgs(t *testing.T) {
-	testArgs := "/s4b 8:30am"
+	testArgs := "/s4b \"test name\" \"8:30am\" \"9:00am\""
 
 	parsedArgs, e := parseArgs(testArgs)
 
 	assert.NotNil(t, parsedArgs)
+	assert.Equal(t, "test name", parsedArgs.MeetingName)
 	assert.Equal(t, "0000-01-01 08:30:00 +0000 UTC", parsedArgs.StartTime.String())
+	assert.Equal(t, "0000-01-01 09:00:00 +0000 UTC", parsedArgs.EndTime.String())
 	assert.Nil(t, e)
 }
 
