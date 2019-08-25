@@ -29,18 +29,39 @@ export default class PostTypeS4b extends React.PureComponent {
         const style = getStyle(this.props.theme);
         const post = this.props.post;
         const props = post.props || {};
-        const preText = `${this.props.creatorName} has started a meeting`;
-        const content = (
-            <a
-                className='btn btn-lg btn-primary'
-                style={style.button}
-                rel='noopener noreferrer'
-                target='_blank'
-                href={props.meeting_link}
-            >
-                {'JOIN MEETING'}
-            </a>
-        );
+        let preText;
+        if (props.meeting_status === 'SCHEDULED') {
+            preText = `${this.props.creatorName} has scheduled a meeting`;
+        } else {
+            preText = `${this.props.creatorName} has started a meeting`;
+        }
+
+        let content;
+        if (props.meeting_status === 'SCHEDULED') {
+            content = (
+                <div>
+                    <p>
+                        Start date: {props.start_time}
+                    </p>
+                    <p>
+                        End date: {props.end_time}
+                    </p>
+                </div>
+            );
+        } else {
+
+            content = (
+                <a
+                    className='btn btn-lg btn-primary'
+                    style={style.button}
+                    rel='noopener noreferrer'
+                    target='_blank'
+                    href={props.meeting_link}
+                >
+                    {'JOIN MEETING'}
+                </a>
+            );
+        }
 
         let title = 'Skype for Business Meeting';
         if (props.meeting_topic) {
