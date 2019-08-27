@@ -30,6 +30,10 @@ func (p *Plugin) CreatePost(post *model.Post) (*model.Post, *model.AppError) {
 	return p.API.CreatePost(post)
 }
 
+type CurrentDate struct {
+	Value time.Time
+}
+
 func getCommand() *model.Command {
 	return &model.Command{
 		Trigger:          "s4b",
@@ -89,7 +93,7 @@ func executeCommand(p IPlugin, c *plugin.Context, args *model.CommandArgs) (*mod
 		return nil, &model.AppError{Message: "User is nil"}
 	}
 
-	parsedArgs, e := parseArgs(args.Command)
+	parsedArgs, e := parseArgs(args.Command, CurrentDate{Value: time.Now()})
 	if e != nil {
 		return nil, &model.AppError{Message: "Invalid arguments"}
 	}
@@ -132,7 +136,7 @@ type ParsedArgs struct {
 	EndTime     time.Time
 }
 
-func parseArgs(args string) (*ParsedArgs, error) {
+func parseArgs(args string, currDate CurrentDate) (*ParsedArgs, error) {
 	re := regexp.MustCompile(`"([^"]*)"`)
 	match := re.FindAllString(args, -1)
 
@@ -148,6 +152,12 @@ func parseArgs(args string) (*ParsedArgs, error) {
 		return nil, e
 	}
 	parsedArgs.EndTime = endTime
+
+	now := currDate.Value
+	parsedArgs.StartTime = time.Date(now.Year(), now.Month(), now.Day(), startTime.Hour(), startTime.Minute(),
+		0, 0, now.Location())
+	parsedArgs.EndTime = time.Date(now.Year(), now.Month(), now.Day(), endTime.Hour(), endTime.Minute(),
+		0, 0, now.Location())
 
 	return &parsedArgs, nil
 }

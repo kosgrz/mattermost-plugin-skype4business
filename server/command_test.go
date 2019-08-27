@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"testing"
+	"time"
 )
 
 func TestCommand(t *testing.T) {
@@ -60,14 +61,17 @@ func TestCommand(t *testing.T) {
 }
 
 func TestParsingArgs(t *testing.T) {
+	testLocation, _ := time.LoadLocation("Asia/Shanghai")
+	testCurrDate := time.Date(2010, 12, 10, 0, 0, 0, 0, testLocation)
+
 	testArgs := "/s4b \"test name\" \"8:30am\" \"9:00am\""
 
-	parsedArgs, e := parseArgs(testArgs)
+	parsedArgs, e := parseArgs(testArgs, CurrentDate{Value: testCurrDate})
 
 	assert.NotNil(t, parsedArgs)
 	assert.Equal(t, "test name", parsedArgs.MeetingName)
-	assert.Equal(t, "0000-01-01 08:30:00 +0000 UTC", parsedArgs.StartTime.String())
-	assert.Equal(t, "0000-01-01 09:00:00 +0000 UTC", parsedArgs.EndTime.String())
+	assert.Equal(t, "2010-12-10 08:30:00 +0800 CST", parsedArgs.StartTime.String())
+	assert.Equal(t, "2010-12-10 09:00:00 +0800 CST", parsedArgs.EndTime.String())
 	assert.Nil(t, e)
 }
 
