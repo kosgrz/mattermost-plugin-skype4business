@@ -142,21 +142,26 @@ func parseArgs(args string, currDate CurrentDate) (*ParsedArgs, error) {
 
 	parsedArgs := ParsedArgs{}
 	parsedArgs.MeetingName = strings.Trim(match[0], "\"")
-	startTime, e := time.Parse(time.Kitchen, strings.ToUpper(strings.Trim(match[1], "\"")))
+	dateOfMeeting, e := time.Parse("2006-01-02", strings.ToUpper(strings.Trim(match[1], "\"")))
+	if e != nil {
+		return nil, e
+	}
+
+	startTime, e := time.Parse(time.Kitchen, strings.ToUpper(strings.Trim(match[2], "\"")))
 	if e != nil {
 		return nil, e
 	}
 	parsedArgs.StartTime = startTime
-	endTime, e := time.Parse(time.Kitchen, strings.ToUpper(strings.Trim(match[2], "\"")))
+	endTime, e := time.Parse(time.Kitchen, strings.ToUpper(strings.Trim(match[3], "\"")))
 	if e != nil {
 		return nil, e
 	}
 	parsedArgs.EndTime = endTime
 
 	now := currDate.Value
-	parsedArgs.StartTime = time.Date(now.Year(), now.Month(), now.Day(), startTime.Hour(), startTime.Minute(),
+	parsedArgs.StartTime = time.Date(dateOfMeeting.Year(), dateOfMeeting.Month(), dateOfMeeting.Day(), startTime.Hour(), startTime.Minute(),
 		0, 0, now.Location())
-	parsedArgs.EndTime = time.Date(now.Year(), now.Month(), now.Day(), endTime.Hour(), endTime.Minute(),
+	parsedArgs.EndTime = time.Date(dateOfMeeting.Year(), dateOfMeeting.Month(), dateOfMeeting.Day(), endTime.Hour(), endTime.Minute(),
 		0, 0, now.Location())
 
 	return &parsedArgs, nil

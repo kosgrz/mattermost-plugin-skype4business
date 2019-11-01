@@ -39,8 +39,8 @@ func TestCommand(t *testing.T) {
 			"meeting_personal":  false,
 			"meeting_status":    "SCHEDULED",
 			"meeting_topic":     "test custom meeting name",
-			"start_time":        "0000-01-01 21:15:00 +0000 UTC",
-			"end_time":          "0000-01-01 21:30:00 +0000 UTC",
+			"start_time":        "2019-11-21 21:15:00 " + time.Now().Format("-0700 MST"),
+			"end_time":          "2019-11-21 21:30:00 " + time.Now().Format("-0700 MST"),
 			"override_icon_url": "test.com/plugins/skype4business/api/v1/assets/profile.png",
 			"override_username": "Skype for Business Plugin",
 		},
@@ -49,7 +49,7 @@ func TestCommand(t *testing.T) {
 	r, err := executeCommand(&p, &plugin.Context{}, &model.CommandArgs{
 		UserId:    "testuserid",
 		ChannelId: "testchannelid",
-		Command:   "/s4b \"test custom meeting name\" \"9:15pm\" \"9:30pm\"",
+		Command:   "/s4b \"test custom meeting name\" \"2019-11-21\" \"9:15pm\" \"9:30pm\"",
 	})
 
 	assert.NotNil(t, r)
@@ -64,14 +64,14 @@ func TestParsingArgs(t *testing.T) {
 	testLocation, _ := time.LoadLocation("Asia/Shanghai")
 	testCurrDate := time.Date(2010, 12, 10, 0, 0, 0, 0, testLocation)
 
-	testArgs := "/s4b \"test name\" \"8:30am\" \"9:00am\""
+	testArgs := "/s4b \"test name\" \"2019-10-20\" \"8:30am\" \"9:00am\""
 
 	parsedArgs, e := parseArgs(testArgs, CurrentDate{Value: testCurrDate})
 
 	assert.NotNil(t, parsedArgs)
 	assert.Equal(t, "test name", parsedArgs.MeetingName)
-	assert.Equal(t, "2010-12-10 08:30:00 +0800 CST", parsedArgs.StartTime.String())
-	assert.Equal(t, "2010-12-10 09:00:00 +0800 CST", parsedArgs.EndTime.String())
+	assert.Equal(t, "2019-10-20 08:30:00 +0800 CST", parsedArgs.StartTime.String())
+	assert.Equal(t, "2019-10-20 09:00:00 +0800 CST", parsedArgs.EndTime.String())
 	assert.Nil(t, e)
 }
 
