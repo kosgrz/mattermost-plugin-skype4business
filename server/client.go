@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/tls"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -122,6 +123,7 @@ func (c *Client) performRequestAndGetAuthHeader(url string) (*string, error) {
 	}
 
 	for k, v := range resp.Header {
+		fmt.Println("Value of header with key " + k + " : " + strings.Join(v, ","))
 		if strings.ToUpper(k) == "WWW-AUTHENTICATE" {
 			authHeader := strings.Join(v, ",")
 			return &authHeader, nil
